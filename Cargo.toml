@@ -1,0 +1,8 @@
+[package]
+name = "The_Fabricof"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+sdl2 = { version = "0.37.0", features = ["ttf"] } # For window and graphics
+rusttype = "0.9"  # For font rendering
