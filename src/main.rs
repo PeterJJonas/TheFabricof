@@ -29,8 +29,12 @@ fn main() {
     // Calculate possible window sizes based on screen resolution and aspect ratio
     let window_sizes = calculate_window_sizes(screen_width, screen_height, 8, 5);
     let mut current_size_index = 2; // Default to an intermediate size
+    println!("Calculated window sizes: {:?}", window_sizes);
+    println!("Initial size index: {}", current_size_index);
 
     let (window_width, window_height) = window_sizes[current_size_index];
+    println!("main() 1 window width: {}, Window height: {}", window_width, window_height);
+
 
     // Create a centred SDL2 window
     let window = video_subsystem
@@ -38,6 +42,7 @@ fn main() {
         .position_centered()
         .build()
         .unwrap();
+    println!("main() 2 window width: {}, Window height: {}", window_width, window_height);
 
     let mut is_fullscreen = false; // Track whether the window is in fullscreen mode
     let mut canvas = window.into_canvas().build().unwrap(); // Create a rendering canvas
@@ -129,9 +134,14 @@ fn main() {
         );
 
         // Get current window size and recalculate scaling factors
+        //let (window_width, window_height) = window_sizes[current_size_index];
+        //println!("while 1 window width: {}, Window height: {}", window_width, window_height);
         let (window_width, window_height) = canvas.window().size();
+        println!("while 2 window width: {}, Window height: {}", window_width, window_height);
         let scale_x = window_width as f32 / BASE_WIDTH as f32;
         let scale_y = window_height as f32 / BASE_HEIGHT as f32;
+        println!("while 3 window width: {}, Window height: {}", window_width, window_height);
+
 
         // Clear the canvas with a black colour
         canvas.set_draw_color(Color::BLACK);
@@ -286,6 +296,7 @@ fn handle_events(
                     *current_size_index = (*current_size_index + 1) % window_sizes.len();
                     let (new_width, new_height) = window_sizes[*current_size_index];
                     canvas.window_mut().set_size(new_width, new_height).unwrap();
+                    println!("Current size index: {}, current window sizes {:?}", *current_size_index, window_sizes[*current_size_index]);
                 }
             }
             Event::KeyDown {
