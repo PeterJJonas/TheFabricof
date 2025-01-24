@@ -268,7 +268,7 @@ fn handle_events(
                 if *is_fullscreen {
                     canvas
                         .window_mut()
-                        .set_fullscreen(FullscreenType::Desktop)
+                        .set_fullscreen(FullscreenType::True)
                         .unwrap();
                 } else {
                     canvas
@@ -281,10 +281,12 @@ fn handle_events(
                 keycode: Some(Keycode::R),
                 ..
             } => {
-                // Resize the window
-                *current_size_index = (*current_size_index + 1) % window_sizes.len();
-                let (new_width, new_height) = window_sizes[*current_size_index];
-                canvas.window_mut().set_size(new_width, new_height).unwrap();
+                if !*is_fullscreen {
+                    // Resize the window
+                    *current_size_index = (*current_size_index + 1) % window_sizes.len();
+                    let (new_width, new_height) = window_sizes[*current_size_index];
+                    canvas.window_mut().set_size(new_width, new_height).unwrap();
+                }
             }
             Event::KeyDown {
                 keycode: Some(Keycode::Left),
@@ -315,6 +317,5 @@ fn calculate_window_sizes(
         width += BASE_WIDTH;
         height = (width * aspect_height) / aspect_width;
     }
-
     sizes
 }
