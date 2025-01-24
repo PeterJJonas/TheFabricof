@@ -27,8 +27,8 @@ fn main() {
     let screen_height = display_mode.h as u32;
 
     // Calculate possible window sizes based on screen resolution and aspect ratio
-    let window_sizes = calculate_window_sizes(screen_width, screen_height, 8, 5);
-    let mut current_size_index = 2; // Default to an intermediate size
+    let window_sizes = calculate_window_sizes(screen_width, screen_height); //, 8, 5
+    let mut current_size_index = 6; // Default to an intermediate size
     println!("Calculated window sizes: {:?}", window_sizes);
     println!("Initial size index: {}", current_size_index);
 
@@ -316,8 +316,8 @@ fn handle_events(
 fn calculate_window_sizes(
     screen_width: u32,
     screen_height: u32,
-    aspect_width: u32,
-    aspect_height: u32,
+//    aspect_width: u32,
+//    aspect_height: u32,
 ) -> Vec<(u32, u32)> {
     let mut sizes = Vec::new();
     let mut width = BASE_WIDTH;
@@ -326,7 +326,8 @@ fn calculate_window_sizes(
     while width <= screen_width && height <= screen_height {
         sizes.push((width, height));
         width += BASE_WIDTH;
-        height = (width * aspect_height) / aspect_width;
+        height += BASE_HEIGHT;
+//        height = (width * aspect_height) / aspect_width;
     }
     sizes
 }
