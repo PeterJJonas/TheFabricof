@@ -8,6 +8,7 @@ use sdl2::rect::Rect;
 use sdl2::ttf::Font;
 use sdl2::video::FullscreenType;
 use std::time::Duration;
+use std::collections::HashSet;
 
 // Constants for base dimensions and character dimensions
 const BASE_WIDTH: u32 = 320;
@@ -96,10 +97,10 @@ fn main() {
         "               ▒    ▒▒▒▒     ♠♠│╱       ".to_string(),
         "               ▒    ▒  ▒     ♠Y│        ".to_string(),
         "               ▒    ▒  ▒      ││        ".to_string(),
-        "               ▒    ▒▒▒▒      ╰│        ".to_string(),
-        "               ▒    ▒▒▒▒       │        ".to_string(),
-        "               ▒    ▒▒▒▒       │        ".to_string(),
-        "               ▒    ▒▒▒▒       │        ".to_string(),
+        " START         ▒    ▒▒▒▒      ╰│        ".to_string(),
+        "   │           ▒    ▒▒▒▒       │        ".to_string(),
+        "   │           ▒    ▒▒▒▒       │        ".to_string(),
+        "   │           ▒    ▒▒▒▒       │        ".to_string(),
     ];
 
     // Define the character picture (grid of ASCII art representing the character)
@@ -114,11 +115,12 @@ fn main() {
     ];
 
     // Initial position of the character
-    let mut character_x: i32 = 10;
+    let mut character_x: i32 = 7;
     let character_y: i32 = 8;
 
     let mut event_pump = sdl_context.event_pump().unwrap(); // Event handler
     let mut is_running = true; // Main game loop flag
+    let mut revealed_positions: HashSet<(usize, usize)> = HashSet::new(); // Track revealed positions
 
     // Main game loop
     while is_running {
@@ -155,6 +157,8 @@ fn main() {
             &mut canvas,
             scale_x,
             scale_y,
+            (character_x as usize, character_y as usize), // Pass character position
+            &mut revealed_positions, // Pass revealed positions
         );
 
         // Render the character at its current position
@@ -162,10 +166,9 @@ fn main() {
             &character_picture,
             &font,
             &mut canvas,
-            character_x,
-            character_y,
             scale_x,
             scale_y,
+            (character_x as isize, character_y as isize), // Pass character position
         );
 
         // Update the display
@@ -184,6 +187,8 @@ fn render_background_and_landscape(
     canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
     scale_x: f32,
     scale_y: f32,
+    character_position: (usize, usize), // Add character position parameter
+    revealed_positions: &mut HashSet<(usize, usize)>, // Add revealed positions parameter
 ) {
     // Render the background grid
     for (row, line) in background_picture.iter().enumerate() {
@@ -204,19 +209,29 @@ fn render_background_and_landscape(
     }
 
     // Render the landscape grid
+    let (char_x, char_y) = character_position;
+    let reveal_radius = 6; // Define the radius around the character to reveal
+
     for (row, line) in landscape_picture.iter().enumerate() {
         for (col, char_to_render) in line.chars().enumerate() {
-            if let Ok(rendered_char) = font.render_char(char_to_render).blended(Color::GREEN) {
-                let texture_creator = canvas.texture_creator();
-                let texture = texture_creator.create_texture_from_surface(&rendered_char).unwrap();
+            // Only render characters within the reveal radius or already revealed
+            if (row as isize - char_y as isize).abs() <= reveal_radius && (col as isize - char_x as isize).abs() <= reveal_radius {
+                revealed_positions.insert((row, col));
+            }
 
-                let dest_rect = Rect::new(
-                    (col as f32 * CHAR_WIDTH as f32 * scale_x) as i32,
-                    (row as f32 * CHAR_HEIGHT as f32 * scale_y) as i32,
-                    (CHAR_WIDTH as f32 * scale_x) as u32,
-                    (CHAR_HEIGHT as f32 * scale_y) as u32,
-                );
-                canvas.copy(&texture, None, dest_rect).unwrap();
+            if revealed_positions.contains(&(row, col)) {
+                if let Ok(rendered_char) = font.render_char(char_to_render).blended(Color::GREEN) {
+                    let texture_creator = canvas.texture_creator();
+                    let texture = texture_creator.create_texture_from_surface(&rendered_char).unwrap();
+
+                    let dest_rect = Rect::new(
+                        (col as f32 * CHAR_WIDTH as f32 * scale_x) as i32,
+                        (row as f32 * CHAR_HEIGHT as f32 * scale_y) as i32,
+                        (CHAR_WIDTH as f32 * scale_x) as u32,
+                        (CHAR_HEIGHT as f32 * scale_y) as u32,
+                    );
+                    canvas.copy(&texture, None, dest_rect).unwrap();
+                }
             }
         }
     }
@@ -227,23 +242,29 @@ fn render_character(
     character_picture: &[String],
     font: &Font,
     canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
-    character_x: i32,
-    character_y: i32,
     scale_x: f32,
     scale_y: f32,
+    character_position: (isize, isize), // Change to isize
 ) {
+    let (char_x, char_y) = character_position;
+
     for (row, line) in character_picture.iter().enumerate() {
         for (col, char_to_render) in line.chars().enumerate() {
             if let Ok(rendered_char) = font.render_char(char_to_render).blended(Color::RED) {
                 let texture_creator = canvas.texture_creator();
                 let texture = texture_creator.create_texture_from_surface(&rendered_char).unwrap();
 
+                // Use checked_add to prevent overflow
+                let dest_x = char_x.checked_add(col as isize).expect("Overflow occurred") as f32 * CHAR_WIDTH as f32 * scale_x;
+                let dest_y = char_y.checked_add(row as isize).expect("Overflow occurred") as f32 * CHAR_HEIGHT as f32 * scale_y;
+
                 let dest_rect = Rect::new(
-                    ((character_x + col as i32) as f32 * CHAR_WIDTH as f32 * scale_x) as i32,
-                    ((character_y + row as i32) as f32 * CHAR_HEIGHT as f32 * scale_y) as i32,
+                    dest_x as i32,
+                    dest_y as i32,
                     (CHAR_WIDTH as f32 * scale_x) as u32,
                     (CHAR_HEIGHT as f32 * scale_y) as u32,
                 );
+                println!("{}", dest_x);
                 canvas.copy(&texture, None, dest_rect).unwrap();
             }
         }
