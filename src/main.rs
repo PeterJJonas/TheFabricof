@@ -13,6 +13,7 @@ const BASE_WIDTH: u32 = 320; // Base width for window scaling
 const BASE_HEIGHT: u32 = 200; // Base height for window scaling
 const CHAR_WIDTH: u32 = 8; // Character width for rendering
 const CHAR_HEIGHT: u32 = 8; // Character height for rendering
+const CHARACTER_SPEED: f32 = 8.0; // Character speed in pixels per second
 
 fn main() {
     // Initialize SDL2 context and subsystems
@@ -71,9 +72,14 @@ fn main() {
     let mut event_pump = sdl_context.event_pump().unwrap();
     let mut is_running = true;
     let mut revealed_positions: HashSet<(usize, usize)> = HashSet::new();
+    let mut last_update = std::time::Instant::now();
 
     // Main game loop
     while is_running {
+        let now = std::time::Instant::now();
+        let delta_time = now.duration_since(last_update).as_secs_f32();
+        last_update = now;
+
         // Handle user input and events
         handle_events(
             &mut is_running,
@@ -83,6 +89,7 @@ fn main() {
             &mut canvas,
             &mut character_x,
             &mut event_pump,
+            delta_time,
         );
 
         // Get current window size and calculate scaling factors
@@ -320,6 +327,7 @@ fn handle_events(
     canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
     character_x: &mut i32,
     event_pump: &mut sdl2::EventPump,
+    delta_time: f32,
 ) {
     for event in event_pump.poll_iter() { // Iterate over events
         match event {
@@ -345,11 +353,11 @@ fn handle_events(
             Event::KeyDown {
                 keycode: Some(Keycode::Left),
                 ..
-            } => *character_x -= 1, // Move character left
+            } => *character_x -= (CHARACTER_SPEED * delta_time) as i32, // Move character left
             Event::KeyDown {
                 keycode: Some(Keycode::Right),
                 ..
-            } => *character_x += 1, // Move character right
+            } => *character_x += (CHARACTER_SPEED * delta_time) as i32, // Move character right
             _ => {}
         }
     }
