@@ -70,11 +70,13 @@ fn main() {
     let mut character_x: i32 = 7;
     let character_y: i32 = 8;
 
-    // Initialize textbox text
+    // Initialize textbox text as a mutable vector of strings
     #[allow(unused_mut)]
-    let mut textbox_text = String::from("Welcome to The Fabricof!
-    This is the very first text line of the game!
-    Please, do not give up, it will be more, soon!");
+    let mut textbox_texts: Vec<String> = vec![
+        String::from("Welcome to The Fabricof!"),
+        String::from("This is the very first text line of the game!"),
+        String::from("Please, do not give up, it will be more, soon!"),
+    ];
 
     // Initialize event pump and running state
     let mut event_pump = sdl_context.event_pump().unwrap();
@@ -138,7 +140,7 @@ fn main() {
 
         // Render the textbox
         render_textbox(
-            &textbox_text,
+            &textbox_texts,
             &font,
             &mut canvas,
             scale_x,
@@ -360,13 +362,14 @@ fn wrap_text(text: &str, max_width: usize) -> String {
 
 // Function to render the textbox
 fn render_textbox(
-    textbox_text: &str,
+    textbox_texts: &[String],
     font: &Font,
     canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
     scale_x: f32,
     scale_y: f32,
 ) {
-    let wrapped_text = wrap_text(textbox_text, TEXT_AREA_WIDTH as usize);
+    let wrapped_text = textbox_texts.join(" ");
+    let wrapped_text = wrap_text(&wrapped_text, TEXT_AREA_WIDTH as usize);
     let textbox_y = BASE_HEIGHT - CHAR_HEIGHT * TEXT_AREA_HEIGHT; // Position the textbox at the bottom
     let start_col = 2; // Start column after the frame
 
