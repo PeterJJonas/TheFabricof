@@ -280,12 +280,12 @@ fn render_landscape(
     character_position: (usize, usize),
     revealed_positions: &mut HashSet<(usize, usize)>,
 ) {
-    let (char_x, char_y) = character_position; // Get character position
+    let (character_x, character_y) = character_position; // Get character position
     let reveal_radius = 6; // Set reveal radius
 
     for (row, line) in landscape_picture.iter().enumerate() { // Iterate over each row
         for (col, char_to_render) in line.chars().enumerate() { // Iterate over each character in the row
-            if (row as isize - char_y as isize).abs() <= reveal_radius && (col as isize - char_x as isize).abs() <= reveal_radius {
+            if (row as isize - character_y as isize).abs() <= reveal_radius && (col as isize - character_x as isize).abs() <= reveal_radius {
                 revealed_positions.insert((row, col)); // Reveal position if within radius
             }
 
@@ -316,7 +316,7 @@ fn render_character(
     scale_y: f32,
     character_position: (isize, isize),
 ) {
-    let (char_x, char_y) = character_position; // Get character position
+    let (character_x, character_y) = character_position; // Get character position
 
     for (row, line) in character_picture.iter().enumerate() { // Iterate over each row
         for (col, char_to_render) in line.chars().enumerate() { // Iterate over each character in the row
@@ -324,8 +324,8 @@ fn render_character(
                 let texture_creator = canvas.texture_creator(); // Create a texture creator
                 let texture = texture_creator.create_texture_from_surface(&rendered_char).unwrap(); // Create a texture from the rendered character
 
-                let dest_x = char_x.checked_add(col as isize).expect("Overflow occurred") as f32 * CHAR_WIDTH as f32 * scale_x; // Calculate x position
-                let dest_y = char_y.checked_add(row as isize).expect("Overflow occurred") as f32 * CHAR_HEIGHT as f32 * scale_y; // Calculate y position
+                let dest_x = character_x.checked_add(col as isize).expect("Overflow occurred") as f32 * CHAR_WIDTH as f32 * scale_x; // Calculate x position
+                let dest_y = character_y.checked_add(row as isize).expect("Overflow occurred") as f32 * CHAR_HEIGHT as f32 * scale_y; // Calculate y position
 
                 let dest_rect = Rect::new(
                     dest_x as i32, // Set x position
