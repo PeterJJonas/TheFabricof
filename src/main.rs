@@ -6,9 +6,12 @@ use sdl2::pixels::Color; // Import SDL2 color handling
 use sdl2::rect::Rect; // Import SDL2 rectangle handling
 use sdl2::ttf::Font; // Import SDL2 TTF font handling
 use sdl2::video::FullscreenType; // Import SDL2 fullscreen handling
+
+// Import standard libraries
 use std::time::Duration; // Import duration handling
 use std::collections::HashSet; // Import HashSet collection
 
+// Constants for window and character dimensions
 const BASE_WIDTH: u32 = 320; // Base width for window scaling
 const BASE_HEIGHT: u32 = 200; // Base height for window scaling
 const TEXT_AREA_HEIGHT: u32 = 9; // Height of the text area in characters
@@ -19,14 +22,10 @@ const CHARACTER_SPEED: f32 = 8.0; // Character speed in pixels per second
 
 fn main() {
     // Initialize SDL2 context and subsystems
-    let sdl_context = sdl2::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
-    let ttf_context = sdl2::ttf::init().unwrap();
+    let (sdl_context, video_subsystem, ttf_context) = initialize_sdl2();
 
     // Get the current display mode to determine screen dimensions
-    let display_mode = video_subsystem.current_display_mode(0).unwrap();
-    let screen_width = display_mode.w as u32;
-    let screen_height = display_mode.h as u32;
+    let (screen_width, screen_height) = get_screen_dimensions(&video_subsystem);
 
     // Calculate possible window sizes based on screen dimensions
     let window_sizes = calculate_window_sizes(screen_width, screen_height);
@@ -493,4 +492,18 @@ fn calculate_scaling_factors(canvas: &sdl2::render::Canvas<sdl2::video::Window>)
     let scale_y = window_height as f32 / BASE_HEIGHT as f32;
     println!("calculate_scaling_factors() 1 window width: {}, Window height: {}", window_width, window_height);
     (scale_x, scale_y)
+}
+
+/// Initialize SDL2 context and subsystems
+fn initialize_sdl2() -> (sdl2::Sdl, sdl2::VideoSubsystem, sdl2::ttf::Sdl2TtfContext) {
+    let sdl_context = sdl2::init().unwrap();
+    let video_subsystem = sdl_context.video().unwrap();
+    let ttf_context = sdl2::ttf::init().unwrap();
+    (sdl_context, video_subsystem, ttf_context)
+}
+
+/// Get the current display mode to determine screen dimensions
+fn get_screen_dimensions(video_subsystem: &sdl2::VideoSubsystem) -> (u32, u32) {
+    let display_mode = video_subsystem.current_display_mode(0).unwrap();
+    (display_mode.w as u32, display_mode.h as u32)
 }
