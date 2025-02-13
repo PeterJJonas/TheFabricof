@@ -18,7 +18,7 @@ const TEXT_AREA_HEIGHT: u32 = 9; // Height of the text area in characters
 const TEXT_AREA_WIDTH: u32 = 35; // Width of the text area in characters
 const CHAR_WIDTH: u32 = 8; // Character width for rendering
 const CHAR_HEIGHT: u32 = 8; // Character height for rendering
-const CHARACTER_SPEED: f32 = 8.0; // Character speed in pixels per second
+const CHARACTER_SPEED: f32 = 8.0; // Character movement speed in pixels per second
 
 fn main() {
     // Initialize SDL2 context and subsystems
@@ -69,6 +69,10 @@ fn main() {
     let mut character_x: i32 = 7;
     let character_y: i32 = 8;
 
+    // Initialize character speed multiplier
+    #[allow(unused_mut)]
+    let mut character_speed_multiplier: f32 = 1.5;
+
     // Initialize textbox text as a mutable vector of strings
     #[allow(unused_mut)]
     let mut textbox_texts: Vec<String> = vec![
@@ -102,6 +106,7 @@ fn main() {
             &mut character_x,
             &mut event_pump,
             delta_time,
+            character_speed_multiplier
         );
 
         // Recalculate scaling factors if window size changed
@@ -400,6 +405,7 @@ fn handle_events(
     character_x: &mut i32,
     event_pump: &mut sdl2::EventPump,
     delta_time: f32,
+    character_speed_multiplier: f32,
 ) -> bool {
     let mut window_size_changed = false;
 
@@ -426,14 +432,14 @@ fn handle_events(
                 resize_window(is_fullscreen, current_size_index, window_sizes, canvas); // Resize window
                 window_size_changed = true;
             }
-            Event::KeyUp {
+            Event::KeyDown {
                 keycode: Some(Keycode::Left),
                 ..
-            } => *character_x -= (CHARACTER_SPEED * delta_time) as i32, // Move character left
-            Event::KeyUp {
+            } => *character_x -= (CHARACTER_SPEED * character_speed_multiplier * delta_time) as i32, // Move character left
+            Event::KeyDown {
                 keycode: Some(Keycode::Right),
                 ..
-            } => *character_x += (CHARACTER_SPEED * delta_time) as i32, // Move character right
+            } => *character_x += (CHARACTER_SPEED * character_speed_multiplier * delta_time) as i32, // Move character right
             _ => {}
         }
     }
