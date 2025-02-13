@@ -76,10 +76,16 @@ fn main() {
     // Initialize textbox text as a mutable vector of strings
     #[allow(unused_mut)]
     let mut textbox_texts: Vec<String> = vec![
-        String::from("Welcome to The Fabricof!"),
-        String::from("This is the very first text line of the game!"),
-        String::from("Please, do not give up, it will be more, soon!"),
+        String::from("\"Welcome   to The Fabricof! Welcome to The Fabricof! Welcome to The Fabricof! Welcome to The Fabricof!"),
+        String::from("       "),
+        String::from("This is the very first text line of the game! This is the very first text line of the game!"),
+        String::from("Please, do not give up, it will be more, soon! Please, do not give up, it will be more, soon!"),
+        String::from("And this line is for the bablabla, blablablab and ablablabla!"),
+        String::from("."),
     ];
+
+    // Initialize scroll position
+    let mut scroll_position: usize = 0;
 
     // Initialize event pump and running state
     let mut event_pump = sdl_context.event_pump().unwrap();
@@ -96,6 +102,12 @@ fn main() {
         let delta_time = now.duration_since(last_update).as_secs_f32();
         last_update = now;
 
+        // Calculate the maximum scroll position
+        let max_scroll_position = textbox_texts.iter()
+            .map(|text| wrap_text(&text, TEXT_AREA_WIDTH as usize).lines().count())
+            .sum::<usize>()
+            .saturating_sub(TEXT_AREA_HEIGHT as usize);
+
         // Handle user input and events
         let window_size_changed = handle_events(
             &mut is_running,
@@ -106,7 +118,9 @@ fn main() {
             &mut character_x,
             &mut event_pump,
             delta_time,
-            character_speed_multiplier
+            character_speed_multiplier,
+            &mut scroll_position,
+            max_scroll_position,
         );
 
         // Recalculate scaling factors if window size changed
@@ -149,6 +163,7 @@ fn main() {
             &mut canvas,
             scale_x,
             scale_y,
+            scroll_position,
         );
 
         // Present the updated canvas
@@ -348,7 +363,7 @@ fn wrap_text(text: &str, max_width: usize) -> String {
     let mut wrapped_text = String::new();
     let mut line_length = 0;
 
-    for word in text.split_whitespace() {
+    for word in text.split(' ') {
         if line_length + word.len() > max_width {
             wrapped_text.push('\n');
             line_length = 0;
@@ -371,13 +386,25 @@ fn render_textbox(
     canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
     scale_x: f32,
     scale_y: f32,
+    scroll_position: usize,
 ) {
-    let wrapped_text = textbox_texts.join(" ");
-    let wrapped_text = wrap_text(&wrapped_text, TEXT_AREA_WIDTH as usize);
     let textbox_y = BASE_HEIGHT - CHAR_HEIGHT * TEXT_AREA_HEIGHT; // Position the textbox at the bottom
     let start_col = 2; // Start column after the frame
+    let mut current_y = textbox_y; // Initialize current y position
 
-    for (row, line) in wrapped_text.lines().enumerate() {
+    let mut lines: Vec<String> = Vec::new();
+    for text in textbox_texts.iter() {
+        let wrapped_text = wrap_text(&text, TEXT_AREA_WIDTH as usize);
+        for line in wrapped_text.lines() {
+            lines.push(line.to_string());
+        }
+    }
+
+    let visible_lines = (TEXT_AREA_HEIGHT - 1) as usize; // Reduce visible lines by one to account for the frame
+    let start_line = scroll_position;
+    let end_line = (scroll_position + visible_lines).min(lines.len());
+
+    for line in &lines[start_line..end_line] {
         for (col, char_to_render) in line.chars().enumerate() {
             if let Ok(rendered_char) = font.render_char(char_to_render).blended(Color::WHITE) {
                 let texture_creator = canvas.texture_creator();
@@ -385,13 +412,14 @@ fn render_textbox(
 
                 let dest_rect = Rect::new(
                     ((start_col + col as u32) as f32 * CHAR_WIDTH as f32 * scale_x) as i32,
-                    ((textbox_y + row as u32 * CHAR_HEIGHT) as f32 * scale_y) as i32,
+                    (current_y as f32 * scale_y) as i32,
                     (CHAR_WIDTH as f32 * scale_x) as u32,
                     (CHAR_HEIGHT as f32 * scale_y) as u32,
                 );
                 canvas.copy(&texture, None, dest_rect).unwrap();
             }
         }
+        current_y += CHAR_HEIGHT; // Move to the next line
     }
 }
 
@@ -406,6 +434,8 @@ fn handle_events(
     event_pump: &mut sdl2::EventPump,
     delta_time: f32,
     character_speed_multiplier: f32,
+    scroll_position: &mut usize,
+    max_scroll_position: usize,
 ) -> bool {
     let mut window_size_changed = false;
 
@@ -440,6 +470,22 @@ fn handle_events(
                 keycode: Some(Keycode::Right),
                 ..
             } => *character_x += (CHARACTER_SPEED * character_speed_multiplier * delta_time) as i32, // Move character right
+            Event::KeyDown {
+                keycode: Some(Keycode::Up),
+                ..
+            } => {
+                if *scroll_position > 0 {
+                    *scroll_position -= 1; // Scroll up
+                }
+            }
+            Event::KeyDown {
+                keycode: Some(Keycode::Down),
+                ..
+            } => {
+                if *scroll_position < max_scroll_position {
+                    *scroll_position += 1; // Scroll down
+                }
+            }
             _ => {}
         }
     }
